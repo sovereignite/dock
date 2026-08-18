@@ -50,7 +50,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/sovereignite/endpoint"
+	"github.com/sovereignite/dock"
 )
 
 func main() {
