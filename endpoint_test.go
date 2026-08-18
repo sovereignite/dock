@@ -2,7 +2,7 @@
 //
 // Copyright (C) 2026 Sovereignite contributors
 
-package endpoint
+package dock
 
 import (
 	"encoding/json"
@@ -105,7 +105,7 @@ func TestPublishAtomicOnRestart(t *testing.T) {
 		t.Errorf("nonce = %q, want %q (second publish should overwrite)", loaded.InstanceNonce, rec2.InstanceNonce)
 	}
 
-	tmpFiles, _ := filepath.Glob(filepath.Join(svcDir, ".endpoint.json.tmp"))
+	tmpFiles, _ := filepath.Glob(filepath.Join(svcDir, ".dock.json.tmp"))
 	if len(tmpFiles) > 0 {
 		t.Errorf("temp files left behind: %v", tmpFiles)
 	}
@@ -196,7 +196,7 @@ func TestCleanupRemovesMatchingRecord(t *testing.T) {
 	if err := Cleanup(svcDir, rec); err != nil {
 		t.Fatalf("Cleanup: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(svcDir, "endpoint.json")); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(svcDir, "dock.json")); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("file still exists after cleanup, err=%v", err)
 	}
 }
@@ -213,7 +213,7 @@ func TestCleanupIgnoresDifferentNonce(t *testing.T) {
 	if err := Cleanup(svcDir, other); err != nil {
 		t.Fatalf("Cleanup: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(svcDir, "endpoint.json")); err != nil {
+	if _, err := os.Stat(filepath.Join(svcDir, "dock.json")); err != nil {
 		t.Errorf("file should still exist: %v", err)
 	}
 }
@@ -235,11 +235,11 @@ func TestReadRecordRejectsSymlink(t *testing.T) {
 	}
 	rec := testRecord("keymanager")
 	data, _ := json.Marshal(rec)
-	realFile := filepath.Join(svcDir, "endpoint.json.real")
+	realFile := filepath.Join(svcDir, "dock.json.real")
 	if err := os.WriteFile(realFile, data, filePerms); err != nil {
 		t.Fatal(err)
 	}
-	linkFile := filepath.Join(svcDir, "endpoint.json")
+	linkFile := filepath.Join(svcDir, "dock.json")
 	if err := os.Symlink(realFile, linkFile); err != nil {
 		t.Fatal(err)
 	}
@@ -255,7 +255,7 @@ func TestReadRecordRejectsMalformedJSON(t *testing.T) {
 	if err := os.MkdirAll(svcDir, dirPerms); err != nil {
 		t.Fatal(err)
 	}
-	bad := filepath.Join(svcDir, "endpoint.json")
+	bad := filepath.Join(svcDir, "dock.json")
 	if err := os.WriteFile(bad, []byte("{bad json"), filePerms); err != nil {
 		t.Fatal(err)
 	}
@@ -338,7 +338,7 @@ func TestPublishFilePermissions(t *testing.T) {
 	if _, err := Publish(svcDir, rec); err != nil {
 		t.Fatalf("Publish: %v", err)
 	}
-	fi, err := os.Stat(filepath.Join(svcDir, "endpoint.json"))
+	fi, err := os.Stat(filepath.Join(svcDir, "dock.json"))
 	if err != nil {
 		t.Fatalf("Stat: %v", err)
 	}
@@ -381,7 +381,7 @@ func TestRecordFromFileRejectsSymlink(t *testing.T) {
 	realFile := filepath.Join(dir, "real.json")
 	data := []byte(`{"version":1,"service":"test","boot_id":"b","instance_nonce":"n","pid":1,"network":"tcp","address":"127.0.0.1","port":1234}`)
 	_ = os.WriteFile(realFile, data, filePerms)
-	linkFile := filepath.Join(dir, "endpoint.json")
+	linkFile := filepath.Join(dir, "dock.json")
 	_ = os.Symlink(realFile, linkFile)
 	_, err := RecordFromFile(linkFile)
 	if !errors.Is(err, ErrSymlinkDetected) {
@@ -447,7 +447,7 @@ func TestPublishRecoversFromCrashPartialState(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tmpFile := filepath.Join(svcDir, ".endpoint.json.tmp")
+	tmpFile := filepath.Join(svcDir, ".dock.json.tmp")
 	if err := os.WriteFile(tmpFile, []byte(`{}`), filePerms); err != nil {
 		t.Fatal(err)
 	}
@@ -471,7 +471,7 @@ func TestReadRecordRejectsCrashPartialEmptyFile(t *testing.T) {
 	if err := os.MkdirAll(svcDir, dirPerms); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(svcDir, "endpoint.json"), []byte(""), filePerms); err != nil {
+	if err := os.WriteFile(filepath.Join(svcDir, "dock.json"), []byte(""), filePerms); err != nil {
 		t.Fatal(err)
 	}
 	_, err := ReadRecord(svcDir)
@@ -487,7 +487,7 @@ func TestReadRecordRejectsTruncatedJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	truncated := []byte(`{"version":1,"service":"key`)
-	if err := os.WriteFile(filepath.Join(svcDir, "endpoint.json"), truncated, filePerms); err != nil {
+	if err := os.WriteFile(filepath.Join(svcDir, "dock.json"), truncated, filePerms); err != nil {
 		t.Fatal(err)
 	}
 	_, err := ReadRecord(svcDir)

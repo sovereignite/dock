@@ -2,7 +2,7 @@
 //
 // Copyright (C) 2026 Sovereignite contributors
 
-package endpoint
+package dock
 
 import (
 	"encoding/json"
@@ -58,7 +58,7 @@ type EndpointRecord struct {
 }
 
 // Publish atomically writes a versioned endpoint record to
-// dir/endpoint.json, creating dir with owner-only permissions if needed.
+// dir/dock.json, creating dir with owner-only permissions if needed.
 // It returns the loopback net.Addr that the caller should listen on.
 func Publish(dir string, record EndpointRecord) (net.Addr, error) {
 	if err := os.MkdirAll(dir, dirPerms); err != nil {
@@ -76,7 +76,7 @@ func Publish(dir string, record EndpointRecord) (net.Addr, error) {
 		return nil, fmt.Errorf("endpoint: marshal record: %w", err)
 	}
 
-	tmp := filepath.Join(dir, ".endpoint.json.tmp")
+	tmp := filepath.Join(dir, ".dock.json.tmp")
 	if err := os.WriteFile(tmp, data, filePerms); err != nil {
 		return nil, fmt.Errorf("endpoint: write temp: %w", err)
 	}
@@ -84,7 +84,7 @@ func Publish(dir string, record EndpointRecord) (net.Addr, error) {
 		_ = os.Remove(tmp)
 		return nil, fmt.Errorf("endpoint: sync temp: %w", err)
 	}
-	if err := os.Rename(tmp, filepath.Join(dir, "endpoint.json")); err != nil {
+	if err := os.Rename(tmp, filepath.Join(dir, "dock.json")); err != nil {
 		_ = os.Remove(tmp)
 		return nil, fmt.Errorf("endpoint: rename: %w", err)
 	}
@@ -125,10 +125,10 @@ func Validate(record EndpointRecord, currentBootID string, currentPID int, servi
 	return nil
 }
 
-// Cleanup removes the endpoint record at dir/endpoint.json if it matches
+// Cleanup removes the endpoint record at dir/dock.json if it matches
 // the given record's service and instance nonce.
 func Cleanup(dir string, record EndpointRecord) error {
-	p := filepath.Join(dir, "endpoint.json")
+	p := filepath.Join(dir, "dock.json")
 	existing, err := readRecord(p)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -192,7 +192,7 @@ func syncDir(dir string) {
 }
 
 // NewServiceDir returns the directory path for a service's endpoint record.
-// Convention: /run/sovereignite/<service>/endpoint.json lives in this dir.
+// Convention: /run/sovereignite/<service>/dock.json lives in this dir.
 func NewServiceDir(base, service string) string {
 	return filepath.Join(base, service)
 }
@@ -233,7 +233,7 @@ func readRecordWithSymlinkCheck(path string) (EndpointRecord, error) {
 // ReadRecord reads and validates an endpoint record from the standard path.
 // It rejects symlinks and malformed records.
 func ReadRecord(dir string) (EndpointRecord, error) {
-	return readRecordWithSymlinkCheck(filepath.Join(dir, "endpoint.json"))
+	return readRecordWithSymlinkCheck(filepath.Join(dir, "dock.json"))
 }
 
 // ValidateRecord reads, checks staleness, and returns the record if valid.
